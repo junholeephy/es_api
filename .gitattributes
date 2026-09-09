@@ -1,0 +1,25 @@
+# 줄 끝 주석을 달지 마라. git 이 그 줄을 통째로, 조용히 무시한다.
+
+# 워크플로를 드러내는 것들. 사본은 평범한 프로그램으로 보여야 한다 (C9)
+README.md                export-ignore
+scripts/sync.sh          export-ignore
+
+# 개발 장비 전용
+requirements-dev.txt     export-ignore
+ruff.toml                export-ignore
+mypy.ini                 export-ignore
+aidlc-docs/              export-ignore
+.aidlc-rule-details/     export-ignore
+tools/                   export-ignore
+docs/insights/           export-ignore
+
+# AI 도구 설정
+.claude/                 export-ignore
+.cursor/                 export-ignore
+.mcp.json                export-ignore
+AGENTS.md                export-ignore
+CLAUDE.md                export-ignore
+.github/                 export-ignore
+
+# 자기 자신도 뺀다
+.gitattributes           export-ignore

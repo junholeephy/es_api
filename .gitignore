@@ -1,0 +1,35 @@
+# 데이터와 산출물 — 확장자 단위로 전면 차단
+*.csv
+*.tsv
+*.jsonl
+*.parquet
+*.xlsx
+*.pkl
+*.sqlite*
+data/
+outputs/
+logs/
+
+# 운영 실값. env.example.yaml 만 커밋되고 나머지 configs/*.yaml 은 전부 막는다.
+# 이름을 하나씩 적으면 오타 한 번에 무시가 풀리고, 그때 조용히 커밋된다.
+configs/*.yaml
+!configs/env.example.yaml
+.env
+
+# 파이썬
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+
+# 노트북
+notebooks/local/
+.ipynb_checkpoints/
+
+# 세션 상태
+.omc/

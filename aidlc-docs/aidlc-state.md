@@ -106,3 +106,14 @@ including this project's CLAUDE.md-derived choices and previously approved AI-DL
 - **Verification**: 105 tests pass (8 consecutive runs, different seeds), ruff/mypy clean, export surface 29 files
 - **Defects found and fixed during Build and Test**: 3 (DST offset invariant, wall-clock chunk arithmetic, filename minute-granularity collision) - all found by property-based tests
 - **Open items**: commit+tag (not requested), sync.sh preflight (needs tag), integration tests (needs cluster), INPUT_SCHEMA and batch_size (need real data)
+
+## Document Compaction (2026-09-09)
+Process artifacts removed after workflow completion, at the user's request:
+- inception/application-design/application-design.md (verbatim concatenation of the other four files)
+- 9 question/plan/clarification files (their answers are recorded in the resulting design documents)
+- audit.md rewritten from a 44KB raw transcript into a decision-and-rationale summary
+
+Kept: all design documents, execution-plan.md, build-and-test instructions, code-summary.md,
+CLAUDE.md and .aidlc-rule-details/ (the workflow definition and its ruleset).
+aidlc-docs: 384KB / 32 files -> 236KB / 22 files. Export surface unchanged (29 files, all of
+aidlc-docs is export-ignored).

@@ -29,6 +29,36 @@ python src/run.py --config configs/env.yaml --from 2026-09-01T18:00 --to 2026-09
 인자를 주지 않으면 **직전에 끝난 하루**를 가져온다. 19:00 에 실행하면 전날 18:00 부터
 당일 18:00 까지다.
 
+## 시간 외의 조건 걸기
+
+`query.extra_filters` 에 Elasticsearch query DSL 절을 그대로 적는다. 시간 범위 뒤에
+이어 붙고 전부 AND 로 묶인다.
+
+```yaml
+query:
+  extra_filters:
+    - exists: { field: "user.name" }     # 이 필드를 가진 문서만
+    - term:   { level: "ERROR" }         # 값이 일치하는 문서만
+```
+
+없는 문서만 받으려면 뒤집는다.
+
+```yaml
+query:
+  extra_filters:
+    - bool:
+        must_not:
+          - exists: { field: "user.name" }
+```
+
+**`exists` 는 색인 여부를 본다.** JSON 에 그 키가 있는지가 아니다. 값이 `null` 이거나
+빈 배열이면 색인되지 않으므로 `exists` 에서 빠진다 — `"user": {"name": null}` 인 문서는
+잡히지 않는다. 매핑에 `null_value` 가 걸려 있으면 반대로 잡힌다.
+
+필터를 걸지 않으면 필드가 없는 문서도 그대로 받아온다. CSV 에서는 `missing_value`
+(기본은 빈 칸)로 찍혀 값이 `null` 인 경우(`null_value`, 기본 `NULL`)와 구별된다.
+이 구분이 필요해서 두 값을 따로 둔 것이다.
+
 ## 파일 이름
 
 ```

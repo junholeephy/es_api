@@ -23,3 +23,4 @@ CLAUDE.md                export-ignore
 
 # 자기 자신도 뺀다
 .gitattributes           export-ignore
+configs/env.example.yaml  export-ignore

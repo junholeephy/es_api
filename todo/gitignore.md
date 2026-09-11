@@ -8,17 +8,17 @@
 
 ## 만드는 법
 
-작업 폴더 루트의 `.gitignore` 에 아래를 더한다. 파일이 없으면 새로 만든다.
+**실값이 든 것들은 자동으로 들어가 있다.** 갱신 스크립트가 `configs/env.yaml`·
+`outputs/`·`notebooks/` 를 만들면서 무시 목록에도 넣는다 — 채우라고 만들어 놓고
+막는 줄을 사람에게 맡기면 잊는 순간 그대로 커밋되기 때문이다.
+
+남은 것은 **이 프로젝트가 만드는 것들**이다. 작업 폴더 루트의 `.gitignore` 에 더한다.
 
 ```gitignore
-# 받아온 문서와 정리한 결과
+# 받아온 문서와 정리한 결과 — 이 프로젝트의 사정
 *.jsonl
 *.csv
-outputs/
 logs/
-
-# 접속 정보
-configs/*.yaml
 .env
 
 # 코드 폴더는 갱신 때마다 통째로 교체된다
@@ -31,7 +31,8 @@ configs/*.yaml
 git status --short
 ```
 
-`outputs/` 나 `configs/env.yaml` 이 목록에 보이면 아직 막히지 않은 것이다.
+`*.jsonl` 이나 `*.csv` 가 목록에 보이면 아직 막히지 않은 것이다.
+(`outputs/`·`configs/env.yaml` 은 자동으로 막혀 있어야 정상이다.)
 
 ## 주의
 

@@ -192,10 +192,19 @@ sync_into_aa() {
   local tag="$1"
 
   [[ -f .staging/.gitignore ]] || printf '*\n' > .staging/.gitignore
-  if [[ ! -f .gitignore ]] || ! grep -qx '\.staging/' .gitignore; then
-    printf '.staging/\n' >> .gitignore
-    log "$(basename "$(pwd -P)")/.gitignore 에 .staging/ 추가"
-  fi
+
+  # 이 스크립트가 만드는 것은 이 스크립트가 막는다. env.yaml 은 실값을 채우라고
+  # 만들어 놓고 무시 목록에 안 넣으면, 채운 순간 그대로 커밋된다 - 사람이 잊으면
+  # 끝인 자리를 사람에게 맡기지 않는다.
+  #
+  # env.example.yaml 은 일부러 뺀다. 실값이 없고, 어떤 키가 있는지 남는 편이 낫다.
+  local ig
+  for ig in '.staging/' 'configs/env.yaml' 'outputs/' 'notebooks/'; do
+    if [[ ! -f .gitignore ]] || ! grep -qxF "$ig" .gitignore; then
+      printf '%s\n' "$ig" >> .gitignore
+      log "$(basename "$(pwd -P)")/.gitignore 에 $ig 추가"
+    fi
+  done
 
   git -C "$STAGING" fetch --tags --quiet
   require_tag "$STAGING" "$tag"
@@ -219,9 +228,20 @@ sync_into_aa() {
   # 설정은 **언제나 {AA} 에 둔다.** $DEST 안에 두면 다음 교체 때 통째로 지워진다.
   # 경로를 상대로 찍으면 어느 configs 인지 알 수 없어서 - 사본에도 configs/ 가
   # 있다 - 전부 절대 경로로 말한다.
-  local ex="$DEST/configs/env.example.yaml" here; here=$(pwd -P)
+  # 예시는 중계 clone 에서 읽는다. 사본에는 configs/ 가 아예 없다 — 런타임에
+  # 아무도 안 읽는 폴더라, 두면 "여기 채우면 되나" 하는 오해만 만든다.
+  # clone 은 방금 이 태그로 checkout 했으므로 버전도 맞다.
+  local ex="$STAGING/configs/env.example.yaml" here; here=$(pwd -P)
   if [[ -f "$ex" ]]; then
     mkdir -p configs
+
+    # 예시를 실값 파일 옆에 둔다. 키 설명이 이 파일 주석에 있어서, 채우는 사람이
+    # 사본 안까지 들어가지 않아도 된다.
+    #
+    # **매번 덮어쓴다.** 실값이 없는 파일이라 잃을 것이 없고, 안 덮으면 저장소에
+    # 키가 늘어도 여기 것은 낡은 채 남아 "예시에 없는 키" 를 찾게 만든다.
+    cp "$ex" configs/env.example.yaml
+
     if [[ ! -f configs/env.yaml ]]; then
       # 옛 이름을 쓰던 작업 폴더가 있다. 그대로 두면 채워둔 실값이 무시된 채
       # 빈 env.yaml 로 돌아서, 설정을 고쳤는데 안 먹는 상태가 된다.
@@ -232,6 +252,7 @@ sync_into_aa() {
       fi
       cp "$ex" configs/env.yaml
       log "생성 — 운영 실값을 채우세요: $here/configs/env.yaml"
+      log "  키 설명은 옆의 env.example.yaml 에 있습니다"
     else
       log "그대로 둡니다 (실값이 든 파일): $here/configs/env.yaml"
       local missing

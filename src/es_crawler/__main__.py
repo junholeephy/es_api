@@ -37,7 +37,7 @@ def read_version() -> str:
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(
         prog="run.py",
-        description="Elasticsearch 에서 구간별로 문서를 받아 JSONL 로 남기고 CSV 로 정리한다.",
+        description="Elasticsearch 에서 구간별로 문서를 받아 JSONL 로 남긴다.",
     )
     ap.add_argument("--config", help="설정 파일 경로. --dry-run 이 아니면 필수")
     ap.add_argument(
@@ -49,7 +49,7 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument(
         "--only",
         choices=("extract", "convert"),
-        help="한 단계만 실행한다. 기본은 두 단계 모두",
+        help="convert 를 주면 받아둔 JSONL 을 CSV 로만 바꾼다. 기본은 JSONL 로 남기는 것까지",
     )
     ap.add_argument("--dry-run", action="store_true", help="합성 문서로 전 구간 스모크")
     ap.add_argument("--rows", type=int, default=1000, help="--dry-run 이 생성할 문서 수")
@@ -121,12 +121,14 @@ def main(argv: list[str] | None = None) -> int:
     service = CrawlService(config, client=client)
 
     try:
-        if args.only == "extract":
-            extract, convert, windows = service.extract_only(start, end)
-        elif args.only == "convert":
+        # 기본은 받아서 JSONL 로 남기는 것까지다. CSV 로 바꾸는 것은 --only convert
+        # 로 따로 돌린다 — 받아오는 일과 정리하는 일은 실패 조건이 다르고,
+        # 정리 규칙이 바뀌어도 이미 받아둔 문서를 다시 조회할 이유는 없다.
+        if args.only == "convert":
             extract, convert, windows = service.convert_only(start, end)
         else:
-            extract, convert, windows = service.run(start, end)
+            extract, convert, windows = service.extract_only(start, end)
+        converted = args.only == "convert"
     except CheckpointError as exc:
         print(f"{exc}", file=sys.stderr)
         return 2
@@ -138,6 +140,7 @@ def main(argv: list[str] | None = None) -> int:
             tempdir.cleanup()
 
     schema = service.schema_report
+    stage = convert if converted else extract
     failed = extract.failed + convert.failed
     status = status_for(schema_ok=schema.ok, chunks_failed=failed)
 
@@ -153,15 +156,17 @@ def main(argv: list[str] | None = None) -> int:
             schema_fields=len(INPUT_SCHEMA),
             schema_sampled=schema.sampled,
             schema_total=service.schema_total,
+            # 돌린 단계의 결과를 센다. convert 만 돌렸는데 extract 쪽 0 을 찍으면
+            # 한 구간도 처리하지 못한 것처럼 읽힌다.
             counts={
-                "done": extract.succeeded,
+                "done": stage.succeeded,
                 "failed": failed,
-                "skipped": extract.skipped,
+                "skipped": stage.skipped,
             },
-            extracted_docs=extract.total_documents,
-            extracted_files=extract.succeeded,
-            converted_rows=convert.total_documents,
-            converted_files=convert.succeeded,
+            extracted_docs=None if converted else extract.total_documents,
+            extracted_files=None if converted else extract.succeeded,
+            converted_rows=convert.total_documents if converted else None,
+            converted_files=convert.succeeded if converted else None,
             runtime_s=time.perf_counter() - started,
             peak_gb=peak_gb(),
             status=status,

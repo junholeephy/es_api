@@ -75,7 +75,8 @@ PyYAML==6.0.3               hypothesis==6.168.0
 |---|---|
 | `--dry-run --rows 2000` | ✅ 종료 코드 `0`, `status: OK` |
 | `--dry-run --rows 2000 --adversarial` | ✅ 종료 코드 `1`, `status: SCHEMA MISMATCH`, 위반 5줄 출력 |
-| `--only extract` / `--only convert` | ✅ 각각 한 단계만 수행 |
+| 기본 실행 / `--only extract` | ✅ 추출까지만 수행. `convert` 줄이 나오지 않는다 |
+| `--only convert` | ✅ 변환만 수행. `extract` 줄이 나오지 않는다 |
 | 인자 없이 (기본 창) | ✅ 전날 18:00 ~ 당일 18:00 |
 
 ### 2.4 성능

@@ -151,7 +151,6 @@ YAML
 **기대**
 ```
 extract   : 25,000 docs -> 1 jsonl
-convert   : 25,000 rows -> 1 csv
 status    : OK
 ```
 25,000 < 10,000 이면 scroll 이 첫 페이지에서 멈춘 것입니다.

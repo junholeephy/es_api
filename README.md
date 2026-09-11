@@ -1,7 +1,10 @@
 # es_api — Elasticsearch 시간 구간 추출기
 
-Elasticsearch 에서 시간 구간별로 문서를 받아 JSONL 로 남기고, 설정한 컬럼만 CSV 로
-정리한다. 하루 한 번 스케줄러가 돌리는 것을 전제로 만들었다.
+Elasticsearch 에서 시간 구간별로 문서를 받아 JSONL 로 남긴다. 하루 한 번 스케줄러가
+돌리는 것을 전제로 만들었다.
+
+설정한 컬럼만 CSV 로 정리하는 단계도 있지만 기본 실행에는 들어있지 않다 —
+`--only convert` 로 따로 돌린다.
 
 > **이 파일은 이식되지 않는다** (`.gitattributes` 의 `export-ignore`).
 > 사본을 받는 쪽이 읽을 문서는 `docs/usage.md` 와 `TODO.md` 다.

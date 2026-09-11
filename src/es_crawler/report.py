@@ -46,10 +46,11 @@ def render(
     schema_sampled: int,
     schema_total: int,
     counts: dict[str, int],
-    extracted_docs: int,
-    extracted_files: int,
-    converted_rows: int,
-    converted_files: int,
+    # 돌지 않은 단계는 None 이다. 0 으로 찍으면 실패한 것처럼 읽힌다.
+    extracted_docs: int | None,
+    extracted_files: int | None,
+    converted_rows: int | None,
+    converted_files: int | None,
     runtime_s: float,
     peak_gb: float,
     status: str,
@@ -80,8 +81,10 @@ def render(
 
     lines.append("chunks    :")
     lines += [f"  {pad(k, 16)} {v:,}" for k, v in counts.items()]
-    lines.append(f"extract   : {extracted_docs:,} docs -> {extracted_files:,} jsonl")
-    lines.append(f"convert   : {converted_rows:,} rows -> {converted_files:,} csv")
+    if extracted_docs is not None and extracted_files is not None:
+        lines.append(f"extract   : {extracted_docs:,} docs -> {extracted_files:,} jsonl")
+    if converted_rows is not None and converted_files is not None:
+        lines.append(f"convert   : {converted_rows:,} rows -> {converted_files:,} csv")
     lines.append(f"runtime   : {runtime_s:.1f}s, peak {peak_gb:.2f}GB")
     lines.append(f"status    : {status}")
     lines.append("=" * WIDTH)

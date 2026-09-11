@@ -38,8 +38,16 @@ def test_the_summary_reports_what_it_actually_did(capsys):
     out = capsys.readouterr().out
 
     assert "300 docs -> 1 jsonl" in out
-    assert "300 rows -> 1 csv" in out
     assert "status    : OK" in out
+
+
+def test_the_default_run_stops_at_jsonl(capsys):
+    """기본 실행은 CSV 를 만들지 않는다. 만들지 않은 단계를 0 으로 찍지도 않는다 —
+    0 으로 찍으면 변환을 시도했다가 한 건도 못 만든 것처럼 읽힌다."""
+    main(["--dry-run", "--rows", "100"])
+    out = capsys.readouterr().out
+    assert "100 docs -> 1 jsonl" in out
+    assert "csv" not in out
 
 
 def test_the_summary_says_the_check_was_a_sample(capsys):
@@ -88,11 +96,19 @@ def test_an_explicit_span_is_split_into_chunks(capsys):
     assert "(3 chunks)" in capsys.readouterr().out
 
 
-def test_running_only_one_stage_leaves_the_other_empty(capsys):
+def test_only_extract_is_still_accepted(capsys):
+    """이미 이 인자를 적어둔 실행 스크립트가 있다. 기본과 같은 뜻이 되었을 뿐이다."""
     main(["--dry-run", "--rows", "100", "--only", "extract"])
+    assert "100 docs -> 1 jsonl" in capsys.readouterr().out
+
+
+def test_asking_for_the_conversion_alone_says_nothing_about_extraction(capsys):
+    """--only convert 는 조회하지 않는다. extract 줄이 0 으로 뜨면 받아오다
+    실패한 것처럼 읽힌다."""
+    main(["--dry-run", "--rows", "100", "--only", "convert"])
     out = capsys.readouterr().out
-    assert "100 docs -> 1 jsonl" in out
-    assert "0 rows -> 0 csv" in out
+    assert "csv" in out
+    assert "jsonl" not in out
 
 
 def test_the_same_seed_gives_the_same_run(capsys):

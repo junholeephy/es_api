@@ -72,7 +72,6 @@ chunks    :
   failed               0
   skipped              0
 extract   : 152,431 docs -> 1 jsonl
-convert   : 152,431 rows -> 1 csv
 runtime   : 412.3s, peak 0.31GB
 status    : OK
 =============================================
@@ -146,7 +145,7 @@ Security Baseline 확장은 옵트아웃(Q12=B)이지만, 위 규칙은 규약�
 
 | 문서 | 기존 결정 | 수정 후 | 근거 |
 |---|---|---|---|
-| Application Design Q2=B | CLI 서브커맨드 2개 (`extract`, `convert`) | **단일 진입점.** 한 번 실행에 추출+변환, RUN SUMMARY 한 장. `--only extract` / `--only convert` 는 개발용 보조 인자 | 하지 말 것 #12, §3.2 |
+| Application Design Q2=B | CLI 서브커맨드 2개 (`extract`, `convert`) | **단일 진입점.** RUN SUMMARY 한 장. 기본 실행은 추출까지만 하고, 변환은 `--only convert` 로 따로 돌린다 (v0.8 에서 변경 — 그 전에는 한 번에 둘 다 했다) | 하지 말 것 #12, §3.2 |
 | D-3 | `convert` 가 `extract` 와 같은 날짜 인자를 받음 | **소멸** — 한 실행 안에서 같은 창을 공유 | CQ3=A |
 | D-4 | 스케줄러가 `extract && convert` 를 이어 실행 | **단일 명령** `python src/run.py --from ... --to ...` | CQ3=A |
 | Application Design Q1=A | 평평한 9개 모듈 | 규약의 공유 모듈 + 프로젝트 고유 모듈 | 규약 §1.5, §3.1 |

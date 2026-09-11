@@ -40,7 +40,7 @@ chmod 600 configs/env.yaml
 ## 확인
 
 ```bash
-python <코드폴더>/src/run.py --config configs/env.yaml --only extract
+python <코드폴더>/src/run.py --config configs/env.yaml
 ```
 
 값이 잘못됐으면 **아무것도 조회하지 않고** 종료 코드 `2` 로 죽는다. 무엇이 잘못됐는지는

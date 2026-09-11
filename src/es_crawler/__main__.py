@@ -113,6 +113,7 @@ def main(argv: list[str] | None = None) -> int:
             tempdir.cleanup()
         return 2
 
+    from . import features
     from .checkpoint import CheckpointError
     from .pipeline import CrawlService
     from .report import peak_gb, render, status_for
@@ -163,6 +164,8 @@ def main(argv: list[str] | None = None) -> int:
                 "failed": failed,
                 "skipped": stage.skipped,
             },
+            # 뽑은 문서를 보는 기능들. 아직 하나도 없으면 빈 dict 라 줄이 안 나온다.
+            metrics=features.process_data(service.schema_sample),
             extracted_docs=None if converted else extract.total_documents,
             extracted_files=None if converted else extract.succeeded,
             converted_rows=convert.total_documents if converted else None,

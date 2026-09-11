@@ -46,6 +46,8 @@ def render(
     schema_sampled: int,
     schema_total: int,
     counts: dict[str, int],
+    # 기능이 없으면 빈 dict 다. 그러면 metrics 줄 자체가 나오지 않는다.
+    metrics: dict[str, str] | None = None,
     # 돌지 않은 단계는 None 이다. 0 으로 찍으면 실패한 것처럼 읽힌다.
     extracted_docs: int | None,
     extracted_files: int | None,
@@ -85,6 +87,9 @@ def render(
         lines.append(f"extract   : {extracted_docs:,} docs -> {extracted_files:,} jsonl")
     if converted_rows is not None and converted_files is not None:
         lines.append(f"convert   : {converted_rows:,} rows -> {converted_files:,} csv")
+    if metrics:
+        lines.append("metrics   :")
+        lines += [f"  {pad(k, 16)} {v}" for k, v in metrics.items()]
     lines.append(f"runtime   : {runtime_s:.1f}s, peak {peak_gb:.2f}GB")
     lines.append(f"status    : {status}")
     lines.append("=" * WIDTH)

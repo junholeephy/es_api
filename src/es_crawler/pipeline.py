@@ -75,6 +75,9 @@ class CrawlService:
         self._extractor: EsExtractor | None = None
         self.schema_report: SchemaReport = SchemaReport([], [], 0)
         self.schema_total = 0
+        # 스키마 대조에 쓴 표본. 기능(features/)도 같은 표본을 본다 — 두 번 뽑으면
+        # 스키마는 통과했는데 기능은 다른 문서를 본 상태가 될 수 있다.
+        self.schema_sample: list[dict[str, Any]] = []
 
     # ------------------------------------------------------------------ setup
 
@@ -127,6 +130,7 @@ class CrawlService:
 
                 if first:
                     self.schema_report = validate(sample)
+                    self.schema_sample = sample
                     self.schema_total = count
                     first = False
             except Exception as exc:

@@ -32,13 +32,17 @@ class EsConfig:
     request_timeout: float = 60.0
     max_retries: int = 3
     ca_certs: str | None = None
+    # 끄면 상대가 누구인지 확인하지 않는다. 기본값은 켠 쪽이다 — 설정 파일에
+    # 한 줄을 적어야만 꺼지게 해서, 꺼져 있다는 사실이 어딘가에 남게 한다.
+    verify_certs: bool = True
 
     def __repr__(self) -> str:
         # 예외를 그대로 로깅할 때 이 객체가 딸려 나올 수 있다. 키는 절대 찍지 않는다.
         return (
             f"EsConfig(hosts={self.hosts!r}, api_key='***', "
             f"request_timeout={self.request_timeout!r}, "
-            f"max_retries={self.max_retries!r}, ca_certs={self.ca_certs!r})"
+            f"max_retries={self.max_retries!r}, ca_certs={self.ca_certs!r}, "
+            f"verify_certs={self.verify_certs!r})"
         )
 
 
@@ -151,12 +155,21 @@ def _build_es(raw: dict[str, Any]) -> EsConfig:
         raise ConfigError("elasticsearch.max_retries must not be negative")
 
     ca = raw.get("ca_certs") or None
+    verify = bool(raw.get("verify_certs", True))
+    if ca and not verify:
+        # 둘 다 적혀 있으면 CA 쪽은 아무 일도 하지 않는다. 검증하고 있다고
+        # 믿은 채로 도는 것이 가장 나쁘므로, 여기서 멈추고 고르게 한다.
+        raise ConfigError(
+            "elasticsearch.ca_certs has no effect while verify_certs is false; keep one"
+        )
+
     return EsConfig(
         hosts=[str(h) for h in hosts],
         api_key=api_key,
         request_timeout=timeout,
         max_retries=retries,
         ca_certs=str(ca) if ca else None,
+        verify_certs=verify,
     )
 
 

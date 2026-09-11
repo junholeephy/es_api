@@ -32,9 +32,17 @@ def build_client(config: EsConfig) -> Elasticsearch:
         "max_retries": config.max_retries,
         "retry_on_timeout": True,
         "retry_on_status": (429, 502, 503, 504),
+        "verify_certs": config.verify_certs,
     }
     if config.ca_certs:
         kwargs["ca_certs"] = config.ca_certs
+    if not config.verify_certs:
+        # 한 번은 반드시 눈에 띄게 남긴다. 검증을 끈 채로 몇 달을 도는 일이
+        # 실제로 일어나고, 그때 아무 기록도 없으면 아무도 알아채지 못한다.
+        log.warning(
+            "TLS certificate verification is OFF — traffic is encrypted "
+            "but the server is not authenticated"
+        )
     return Elasticsearch(**kwargs)
 
 

@@ -221,6 +221,8 @@ CLI에서 시각을 명시하면 anchor는 **쓰이지 않습니다**. `anchor_t
 | `api_key` | `.env` | 빈 문자열 불가. **로그에 절대 출력 금지** |
 | `request_timeout` | 설정 파일 (기본 60초) | > 0 |
 | `max_retries` | 설정 파일 (기본 3) | >= 0 |
+| `ca_certs` | 설정 파일 (기본 없음) | 자체 서명 인증서를 쓰는 클러스터용 CA 번들 경로 |
+| `verify_certs` | 설정 파일 (기본 `true`) | `false` 면 서버를 인증하지 않는다. `ca_certs` 와 함께 적으면 `ConfigError` — CA 가 무시되는 것을 모른 채 도는 편이 더 나쁘다 |
 
 ---
 

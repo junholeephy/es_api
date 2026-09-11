@@ -15,9 +15,9 @@ import pytest
 from conftest import TZ
 
 from es_crawler.chunker import TimeWindow
-from es_crawler.config import QueryConfig
-from es_crawler.load import EsExtractor
-from es_crawler.synth import FakeSearchClient, generate
+from es_crawler.config import ConfigError, EsConfig, QueryConfig, build_config
+from es_crawler.load import EsExtractor, build_client
+from es_crawler.synth import FakeSearchClient, dry_run_config, generate
 
 WINDOW = TimeWindow(datetime(2026, 9, 8, 18, 0, tzinfo=TZ), datetime(2026, 9, 9, 18, 0, tzinfo=TZ))
 QUERY = QueryConfig(index="logs-*", time_field="@timestamp", batch_size=100)
@@ -152,3 +152,60 @@ def test_windows_that_touch_do_not_double_count():
     a = reader.build_query(first)["query"]["bool"]["filter"][0]["range"]["@timestamp"]
     b = reader.build_query(second)["query"]["bool"]["filter"][0]["range"]["@timestamp"]
     assert a["lt"] == b["gte"]
+
+
+# ------------------------------------------------------- 접속 설정
+
+
+def es_section(tmp_path, **overrides) -> EsConfig:
+    raw = dry_run_config(tmp_path)
+    raw["elasticsearch"] = {**raw["elasticsearch"], **overrides}
+    return build_config(raw).es
+
+
+def captured_kwargs(monkeypatch, config: EsConfig) -> dict:
+    seen: dict = {}
+
+    def fake(**kwargs):
+        seen.update(kwargs)
+        return object()
+
+    monkeypatch.setattr("es_crawler.load.Elasticsearch", fake)
+    build_client(config)
+    return seen
+
+
+def test_certificates_are_verified_unless_the_config_says_otherwise(tmp_path):
+    """켠 쪽이 기본이다. 끄려면 설정 파일에 한 줄을 적어야 한다."""
+    assert es_section(tmp_path).verify_certs is True
+
+
+def test_turning_verification_off_reaches_the_client(monkeypatch, tmp_path):
+    config = es_section(tmp_path, verify_certs=False)
+    assert captured_kwargs(monkeypatch, config)["verify_certs"] is False
+
+
+def test_turning_verification_off_is_logged(monkeypatch, tmp_path, caplog):
+    """검증이 꺼진 채로 도는 실행은 로그만 봐도 알 수 있어야 한다."""
+    config = es_section(tmp_path, verify_certs=False)
+    with caplog.at_level("WARNING"):
+        captured_kwargs(monkeypatch, config)
+    assert "verification is OFF" in caplog.text
+
+
+def test_a_verified_run_says_nothing_about_certificates(monkeypatch, tmp_path, caplog):
+    with caplog.at_level("WARNING"):
+        captured_kwargs(monkeypatch, es_section(tmp_path))
+    assert "verification is OFF" not in caplog.text
+
+
+def test_a_ca_bundle_with_verification_off_does_not_start(tmp_path):
+    """CA 를 적어두고 검증을 끄면 CA 는 아무 일도 하지 않는다. 고르게 한다."""
+    with pytest.raises(ConfigError, match="verify_certs"):
+        es_section(tmp_path, ca_certs="/etc/ssl/internal.pem", verify_certs=False)
+
+
+def test_the_masked_repr_still_hides_the_key_with_the_new_field(tmp_path):
+    text = repr(es_section(tmp_path, verify_certs=False))
+    assert "verify_certs=False" in text
+    assert "dry-run" not in text

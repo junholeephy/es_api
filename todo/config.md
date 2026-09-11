@@ -31,6 +31,7 @@ chmod 600 configs/env.yaml
 | `elasticsearch.hosts` | 클러스터 주소 목록 | 시작하지 못한다 |
 | `elasticsearch.api_key` | API Key | 시작하지 못한다 |
 | `elasticsearch.ca_certs` | 자체 서명 인증서를 쓸 때만 | 시스템 인증서를 쓴다 |
+| `elasticsearch.verify_certs` | 인증서를 검증할지. 예시 파일은 `false` 다 | 검증한다 |
 | `query.index` | 조회할 인덱스. 와일드카드 가능 | 시작하지 못한다 |
 | `query.time_field` | 시간 범위를 걸 필드 이름 | 시작하지 못한다 |
 | `output.columns` | CSV 로 뽑을 필드와 그 헤더 이름 | 시작하지 못한다 |

@@ -163,7 +163,7 @@ def main(argv: list[str] | None = None) -> int:
                 "failed": failed,
                 "skipped": stage.skipped,
             },
-            # 뽑은 히트를 보는 기능들. 기능이 없어도 표본 건수는 찍는다.
+            # 뽑은 히트를 보는 기능들. 아직 하나도 없으면 빈 dict 라 구역이 안 나온다.
             metrics=process_data(service.schema_sample),
             extracted_docs=None if converted else extract.total_documents,
             extracted_files=None if converted else extract.succeeded,

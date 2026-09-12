@@ -7,7 +7,7 @@
 기능을 만들려면 둘이면 된다:
 
     cp -r src/es_crawler/features/template src/es_crawler/features/<기능>
-    # 아래 FEATURES 에 한 줄 더한다
+    # pipeline.py 의 FEATURES 에 한 줄 더한다
 
 목록이 `pipeline.py` 에 있는 것이 요점이다 — 그쪽은 이 프로젝트가 고치는 파일이고,
 공유 코드(`schema` · `load` · `report` · `synth`)와 진입점은 기능이 늘어도 손대지

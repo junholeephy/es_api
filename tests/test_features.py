@@ -18,12 +18,13 @@ def hit(**source: Any) -> dict[str, Any]:
     return {"_index": "logs-000001", "_id": "abc", "_score": None, "_source": source}
 
 
-def test_no_features_still_reports_the_sample_size():
-    """본업은 뽑아 떨구는 것이다. 기능이 없는 것은 결함이 아니다.
+def test_no_features_means_no_metrics_section():
+    """본업은 뽑아 떨구는 것이다. 기능이 없는 것은 결함이 아니라 "아직 없다" 다.
 
-    그래도 건수는 찍는다 — 분모가 없으면 나중에 붙는 비율을 읽을 수 없다.
+    몇 건 처리했나는 여기 끼워 넣지 않는다 — 부산물이지 입력에서 파생한 것이
+    아니다. 그 숫자는 리포트가 extract 줄로 직접 찍는다.
     """
-    assert pipeline.process_data([hit(a=1)]) == {"hits": "1"}
+    assert pipeline.process_data([hit(a=1)]) == {}
 
 
 def test_a_registered_feature_shows_up():

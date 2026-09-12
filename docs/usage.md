@@ -94,6 +94,8 @@ chunks    :
   failed           0
   skipped          0
 extract   : 152,431 docs -> 1 jsonl
+metrics   :
+  hits             1,000
 runtime   : 412.3s, peak 0.31GB
 status    : OK
 =============================================
@@ -105,6 +107,7 @@ status    : OK
 | `window` | 실제로 조회한 구간과 조각 수 |
 | `schema` | 문서의 형태가 `schema.py` 의 선언과 다른 부분. **표본이다** — 전수 검사가 아니다 |
 | `chunks` | 조각별 결과. `failed` 가 0 이 아니면 그 구간의 파일은 아직 없다 |
+| `metrics` | 받은 문서를 보고 낸 지표. `hits` 는 그 분모이며 **첫 조각의 표본**이다 |
 | `status` | `OK` / `SCHEMA MISMATCH` / `CHUNKS FAILED` / 둘 다 |
 
 `schema` 줄에 뜬 내용은 그대로 옮겨 적어 전달한다. 필드 이름과 건수만 나오고

@@ -46,7 +46,7 @@ def render(
     schema_sampled: int,
     schema_total: int,
     counts: dict[str, int],
-    # 기능이 없으면 빈 dict 다. 그러면 metrics 줄 자체가 나오지 않는다.
+    # 기능이 없어도 표본 건수는 들어온다. 비어 있을 때만 줄이 나오지 않는다.
     metrics: dict[str, str] | None = None,
     # 돌지 않은 단계는 None 이다. 0 으로 찍으면 실패한 것처럼 읽힌다.
     extracted_docs: int | None,

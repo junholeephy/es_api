@@ -1,7 +1,11 @@
-"""실행 흐름을 조립한다.
+"""실행 흐름을 조립하고, 기능 목록을 든다.
 
 컴포넌트끼리는 서로를 모른다. 조합은 전부 여기서 일어나고, 그래서 순서에 얽힌
 규칙도 전부 여기에 모인다.
+
+`FEATURES` 가 여기 있는 것이 요점이다 — 이 파일은 프로젝트가 고치는 파일이고,
+공유 코드(`schema` · `load` · `report` · `synth`)와 진입점은 기능이 늘어도
+손대지 않는다.
 """
 
 from __future__ import annotations
@@ -24,6 +28,40 @@ from .schema import validate
 from .writer import JsonlWriter, count_lines
 
 log = logging.getLogger(__name__)
+
+
+# --------------------------------------------------------------- 기능 등록부
+
+# 화면에 뜨는 순서다. 사람이 사이클 사이에 눈으로 대조하므로 순서를 바꾸지 않는다.
+#
+# 비어 있는 이유는 이 프로그램의 본업이 **뽑아 떨구는 것**이라, 뽑은 문서를 읽어
+# 지표를 내는 일이 아직 없기 때문이다. 진행 상황(extract·convert)은 본업의 결과지
+# 입력을 읽어 만든 것이 아니라서 리포트가 직접 찍는다.
+#
+#     cp -r src/es_crawler/features/template src/es_crawler/features/<기능>
+#     # 여기에 한 줄 더한다
+FEATURES: tuple[Any, ...] = ()
+
+
+def process_data(hits: list[dict[str, Any]]) -> dict[str, str]:
+    """기능 전부를 돌리고 지표를 합친다.
+
+    기능이 하나도 없어도 건수는 찍는다. 분모가 보이지 않으면 나중에 붙는 비율을
+    읽을 수 없고, 이 표본은 전수가 아니라 첫 조각에서 뽑은 것이라 더 그렇다.
+    """
+    metrics: dict[str, str] = {"hits": f"{len(hits):,}"}
+    for feature in FEATURES:
+        result = feature.process_data(hits)
+        collided = metrics.keys() & result.keys()
+        if collided:
+            # 조용히 덮어쓰면 화면의 숫자가 거짓이 된다 — 마지막 기능의 값만 남고
+            # 덮였다는 사실은 어디에도 안 뜬다. 시끄럽게 죽는 쪽이 낫다.
+            raise KeyError(
+                f"{feature.NAME} 의 지표 이름이 겹친다: {sorted(collided)}. "
+                f"지표 이름 앞에 NAME 을 붙여라"
+            )
+        metrics.update(result)
+    return metrics
 
 
 @dataclass

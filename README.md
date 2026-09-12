@@ -23,8 +23,10 @@ src/es_crawler/
   writer.py               JSONL 쓰기 (원자적)
   converter.py            JSONL -> CSV
   checkpoint.py           구간별 진행 상태
-  pipeline.py             조립. 순서에 얽힌 규칙이 전부 여기 모인다
+  pipeline.py             조립 + 기능 목록(FEATURES). 순서에 얽힌 규칙이 여기 모인다
   report.py               RUN SUMMARY
+  features/               기능 하나가 폴더 하나. template/ 이 복사 원본
+  features/_shared.py     둘 이상이 같이 쓰는 것만
 configs/env.example.yaml  설정 예시. 실값은 운영 쪽에만
 TODO.md · todo/           운영 환경에서 만들어야 하는 것과 그 규격
 docs/usage.md             프로그램이 어떻게 도는지 (이식됨)

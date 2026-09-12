@@ -69,19 +69,24 @@ class Report:
 _MISSING = object()
 
 
-def resolve(hit: dict[str, Any], path: str) -> Any:
-    """히트에서 경로에 해당하는 값을 꺼낸다. 없으면 _MISSING."""
+def resolve(hit: dict[str, Any], path: str, default: Any = _MISSING) -> Any:
+    """히트에서 경로에 해당하는 값을 꺼낸다. 없으면 default.
+
+    기본값을 주지 않으면 _MISSING 을 돌려준다 — 대조하는 쪽은 "필드가 없음"과
+    "값이 null" 을 갈라야 하기 때문이다. 기능(features/)처럼 그 구분이 필요 없는
+    쪽은 default 를 주면 모듈 private 인 _MISSING 을 알 필요가 없다.
+    """
     if path in METADATA_FIELDS:
-        return hit.get(path, _MISSING)
+        return hit.get(path, default)
 
     node: Any = hit.get("_source")
     if not isinstance(node, dict):
-        return _MISSING
+        return default
     for part in path.split("."):
         if isinstance(node, dict) and part in node:
             node = node[part]
         else:
-            return _MISSING
+            return default
     return node
 
 

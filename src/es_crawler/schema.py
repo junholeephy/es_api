@@ -10,8 +10,10 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from datetime import datetime
+from functools import lru_cache
 from typing import Any
 
 METADATA_FIELDS = frozenset({"_id", "_index", "_score"})
@@ -69,6 +71,38 @@ class Report:
 _MISSING = object()
 
 
+_SEGMENT = re.compile(r"^(?P<name>[^\[\]]*)(?P<idx>(?:\[-?\d+\])*)$")
+_INDEX = re.compile(r"\[(-?\d+)\]")
+
+
+@lru_cache(maxsize=256)
+def parse_path(path: str) -> tuple[tuple[str, tuple[int, ...]], ...]:
+    """점 경로를 (이름, 인덱스들) 단계로 쪼갠다. 문법이 틀리면 ValueError.
+
+    `a.b` 는 물론 `messages[-1].content` 처럼 리스트에서 하나를 고르는 것도 된다.
+    음수는 뒤에서 센다 — 대화 이력처럼 길이가 매번 다른 리스트에서 마지막 하나를
+    집을 때 쓴다.
+
+    설정을 읽을 때 여기서 한 번 검증한다. 문법이 틀린 경로를 그냥 두면 "값이
+    없다"로 조용히 흘러가고, 그건 빈 칸으로만 보여서 알아채기 어렵다.
+
+    1행마다 컬럼 수만큼 불리므로 결과를 캐시한다. 경로는 설정에서 오는 몇 개뿐이다.
+    """
+    if not path:
+        raise ValueError("path must not be empty")
+    steps: list[tuple[str, tuple[int, ...]]] = []
+    for part in path.split("."):
+        matched = _SEGMENT.match(part)
+        if matched is None:
+            raise ValueError(f"bad path segment {part!r} in {path!r}")
+        name = matched.group("name")
+        indices = tuple(int(n) for n in _INDEX.findall(matched.group("idx")))
+        if not name and not indices:
+            raise ValueError(f"empty path segment in {path!r}")
+        steps.append((name, indices))
+    return tuple(steps)
+
+
 def resolve(hit: dict[str, Any], path: str, default: Any = _MISSING) -> Any:
     """히트에서 경로에 해당하는 값을 꺼낸다. 없으면 default.
 
@@ -82,11 +116,25 @@ def resolve(hit: dict[str, Any], path: str, default: Any = _MISSING) -> Any:
     node: Any = hit.get("_source")
     if not isinstance(node, dict):
         return default
-    for part in path.split("."):
-        if isinstance(node, dict) and part in node:
-            node = node[part]
-        else:
-            return default
+    try:
+        steps = parse_path(path)
+    except ValueError:
+        # 문법이 틀린 경로는 여기서 죽이지 않는다. 설정에서 온 경로는 읽을 때
+        # 이미 검증했고(config), 30분 받아온 뒤에 터지면 그 실행을 통째로 버린다.
+        return default
+    for name, indices in steps:
+        if name:
+            if not isinstance(node, dict) or name not in node:
+                return default
+            node = node[name]
+        for i in indices:
+            # 문자열은 인덱스가 먹지만 글자 하나를 돌려준다. 의도한 적이 없다.
+            if not isinstance(node, (list, tuple)):
+                return default
+            try:
+                node = node[i]
+            except IndexError:
+                return default
     return node
 
 

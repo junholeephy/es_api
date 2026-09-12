@@ -17,6 +17,8 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import yaml
 
+from .schema import parse_path
+
 MAX_CHUNK_HOURS = 24
 METADATA_FIELDS = frozenset({"_id", "_index", "_score"})
 
@@ -127,6 +129,12 @@ def _build_columns(raw: Any) -> list[ColumnSpec]:
         header = str(item.get("header", "")).strip()
         if not source:
             raise ConfigError(f"output.columns[{i}].source must not be empty")
+        try:
+            # 문법이 틀린 경로는 "값이 없다"로 조용히 흘러가 빈 칸으로만 보인다.
+            # 30분 받아온 뒤에 알아채는 것보다 시작 전에 죽는 편이 낫다.
+            parse_path(source)
+        except ValueError as exc:
+            raise ConfigError(f"output.columns[{i}].source: {exc}") from exc
         if not header:
             raise ConfigError(f"output.columns[{i}].header must not be empty")
         if header in seen:

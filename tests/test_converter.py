@@ -10,13 +10,15 @@ import csv
 import json
 from pathlib import Path
 
+import pytest
 from conftest import column_specs, hits
 from hypothesis import given
 from hypothesis import strategies as st
 
-from es_crawler.config import ColumnSpec, OutputConfig
+from es_crawler.config import ColumnSpec, ConfigError, OutputConfig, build_config
 from es_crawler.converter import MISSING, CsvConverter, extract_value
-from es_crawler.schema import METADATA_FIELDS
+from es_crawler.schema import METADATA_FIELDS, resolve
+from es_crawler.synth import dry_run_config
 
 
 def make(tmp_path: Path, columns: list[ColumnSpec], **kwargs) -> CsvConverter:
@@ -178,3 +180,33 @@ def test_a_broken_line_leaves_no_half_written_file(tmp_path):
 
     assert not target.exists()
     assert not (tmp_path / "out.csv.tmp").exists()
+
+
+# ------------------------------------- 경로 해석기를 한 벌로 합친 뒤의 회귀
+
+
+def test_the_converter_and_the_schema_read_a_path_the_same_way():
+    """두 벌이던 것을 한 벌로 합쳤다. 갈라지면 스키마에 선언할 수 있는 경로와
+    CSV 컬럼에 쓸 수 있는 경로가 달라진다."""
+    document = {
+        "_id": "abc",
+        "_score": None,
+        "_source": {"user": {"name": "kim", "tags": ["a", "b"]}},
+    }
+    for path in ("_id", "_score", "user.name", "user.tags[-1]", "user.none", "bad["):
+        mine = extract_value(document, path)
+        theirs = resolve(document, path, MISSING)
+        assert mine is theirs or mine == theirs, path
+
+
+def test_a_column_may_pick_one_item_out_of_a_list():
+    document = {"_source": {"messages": [{"content": "첫"}, {"content": "끝"}]}}
+    assert extract_value(document, "messages[-1].content") == "끝"
+
+
+def test_a_malformed_column_path_stops_before_anything_runs(tmp_path):
+    """틀린 경로는 빈 칸으로만 보인다. 30분 받아온 뒤가 아니라 지금 죽어야 한다."""
+    raw = dry_run_config(tmp_path)
+    raw["output"]["columns"] = [{"source": "messages[a]", "header": "x"}]
+    with pytest.raises(ConfigError, match="bad path segment"):
+        build_config(raw)

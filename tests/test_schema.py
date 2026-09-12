@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from es_crawler import schema as sch
 from es_crawler.schema import Field, Report, resolve, validate
 from es_crawler.synth import generate
@@ -99,3 +101,60 @@ def test_a_timestamp_written_with_z_is_accepted(monkeypatch):
 def test_report_is_ok_only_when_there_are_no_violations():
     assert Report([], ["note"]).ok
     assert not Report(["violation"], []).ok
+
+
+# ------------------------------------------------------------------ 경로 해석
+
+MESSAGES = {
+    "_source": {
+        "request_body_content": {
+            "messages": [
+                {"role": "system", "content": "지시"},
+                {"role": "user", "content": "1턴 질문"},
+                {"role": "assistant", "content": "1턴 답변"},
+                {"role": "user", "content": "2턴 질문"},
+            ]
+        },
+        "plain": "문자열",
+    }
+}
+
+SENTINEL = object()
+
+
+def test_an_index_picks_one_item_out_of_a_list():
+    assert resolve(MESSAGES, "request_body_content.messages[0].role") == "system"
+
+
+def test_a_negative_index_counts_from_the_end():
+    """대화 이력은 턴마다 길이가 다르다. 마지막 하나를 길이 없이 집을 수 있어야 한다."""
+    assert resolve(MESSAGES, "request_body_content.messages[-1].content") == "2턴 질문"
+    assert resolve(MESSAGES, "request_body_content.messages[-1].role") == "user"
+
+
+def test_an_index_past_the_end_is_missing_not_an_error():
+    """30분 받아온 뒤 IndexError 로 죽으면 그 실행을 통째로 버린다."""
+    assert resolve(MESSAGES, "request_body_content.messages[99].content", SENTINEL) is SENTINEL
+
+
+def test_indexing_something_that_is_not_a_list_is_missing():
+    """문자열은 인덱스가 먹지만 글자 하나를 돌려준다. 의도한 적이 없다."""
+    assert resolve(MESSAGES, "plain[0]", SENTINEL) is SENTINEL
+
+
+def test_a_malformed_path_reads_as_missing():
+    """설정에서 온 경로는 읽을 때 이미 검증했다. 여기서 또 죽일 이유가 없다."""
+    for bad in ("plain[", "plain[a]", "..", ""):
+        assert resolve(MESSAGES, bad, SENTINEL) is SENTINEL
+
+
+def test_parse_path_refuses_what_it_cannot_read():
+    """설정 단계에서 걸러내려면 여기서 조용히 넘기면 안 된다."""
+    for bad in ("plain[", "plain[a]", "a..b", ""):
+        with pytest.raises(ValueError):
+            sch.parse_path(bad)
+
+
+def test_parse_path_accepts_the_shapes_we_use():
+    assert sch.parse_path("a.b") == (("a", ()), ("b", ()))
+    assert sch.parse_path("messages[-1].content") == (("messages", (-1,)), ("content", ()))

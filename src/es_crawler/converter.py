@@ -17,29 +17,19 @@ from pathlib import Path
 from typing import Any
 
 from .config import ColumnSpec, OutputConfig
-from .schema import METADATA_FIELDS
+from .schema import resolve
 
 MISSING = object()
 """필드가 아예 없음. None(값이 null)과 구별해야 하므로 별도 표식을 쓴다."""
 
 
 def extract_value(hit: dict[str, Any], path: str) -> Any:
-    """히트에서 경로에 해당하는 값을 꺼낸다.
+    """히트에서 경로에 해당하는 값을 꺼낸다. 없으면 MISSING.
 
-    _id / _index / _score 는 히트 최상위에서, 나머지는 _source 안에서 찾는다.
+    경로 해석은 schema 에 한 벌만 둔다. 여기 따로 두면 한쪽만 고쳐지고, 그때부터
+    스키마 선언에 쓸 수 있는 경로와 CSV 컬럼에 쓸 수 있는 경로가 달라진다.
     """
-    if path in METADATA_FIELDS:
-        return hit.get(path, MISSING)
-
-    node: Any = hit.get("_source")
-    if not isinstance(node, dict):
-        return MISSING
-    for part in path.split("."):
-        if isinstance(node, dict) and part in node:
-            node = node[part]
-        else:
-            return MISSING
-    return node
+    return resolve(hit, path, MISSING)
 
 
 class CsvConverter:

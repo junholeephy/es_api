@@ -1,4 +1,7 @@
-"""기능 하나의 판정. 복사해서 쓰는 원본이다.
+"""기능 하나. 복사해서 쓰는 원본이다.
+
+**기능은 판정만이 아니다.** 같은 입력을 읽어 지표를 내는 독립 단위면 무엇이든
+기능이다 — 빈 값 비율, 길이 분포, 중복 검출 전부.
 
     cp -r src/<pkg>/features/template src/<pkg>/features/<기능>
 
@@ -32,6 +35,6 @@ def process_data(rows: list[dict]) -> dict:
 def _hit(row: dict) -> bool:
     """이 문서가 이 기능에 걸리는가.
 
-    ⭐ TODO: 실제 판정을 여기에. 지금은 "빈 값이 하나라도 있나" 를 본다.
+    ⭐ TODO: 실제 내용을 여기에. 지금은 "빈 값이 하나라도 있나" 를 본다.
     """
     return any(value in (None, "") for value in row.values())
